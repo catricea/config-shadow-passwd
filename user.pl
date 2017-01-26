@@ -182,5 +182,7 @@ sub insertGroup {
 
 sub removeUser {
 	my $login = $_[0];
+	`sed '/^$login/d' $paswd`;
+	`sed '/^$login/d' $shadow`;
 	print "suppression de l'utilisateur ".$login."\n";
 }
