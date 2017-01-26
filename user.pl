@@ -185,5 +185,6 @@ sub removeUser {
 	my $login = $_[0];
 	`sed -i '/^$login/d' $passwd`;
 	`sed -i '/^$login/d' $shadow`;
+	`sed -i '/$login/d' $log`;
 	print "suppression de l'utilisateur ".$login."\n";
 }
