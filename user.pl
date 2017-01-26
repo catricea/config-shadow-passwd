@@ -117,6 +117,9 @@ sub insertOneUser {
 
 	# écriture dans les fichiers
 	if($exist == 0){
+		# ajout du dossier
+		`mkdir /home/$login` or die ("impossible de créer le répertoire\n");
+
 		open(my $HAND2, '>>', $passwd) or die ("impossible d'ouvrir le fichier passwd\n");
 		print $HAND2 $login.":x:".$oneID.":50::/home/".$login.":bin/bash\n";
 		close($HAND2);
@@ -130,8 +133,6 @@ sub insertOneUser {
 		print $HAND1 "prénom:nom:login:uid:password\n";
 		print $HAND1 $firstName." ".$lastName.":".$login.":".$oneID.":".$oneMDP."\n";
 
-		# ajout du dossier
-		`mkdir /home/$login` or die ("impossible de créer le répertoire\n");
 		print "insertion de l'utilisateur ".$login."\n";
 	}
 }
@@ -141,6 +142,7 @@ sub insertOneUser {
 sub insertPasswd {
 	open(my $HAND2, '>>', $passwd) or die ("impossible d'ouvrir le fichier passwd\n");
 	foreach my $user(keys %users) {
+		`mkdir /home/$user`;# or die ("impossible de créer le répertoire\n");
 		print $HAND2 $user.":x:".$users{$user}.":50::/home/".$user.":bin/bash\n";
 	}
 	close($HAND2);
@@ -152,7 +154,6 @@ sub insertShadow {
 open(my $HAND3, '>>', $shadow) or die ("impossible d'ouvrir le fichier shadow\n");
 	foreach my $user(keys %users) {
 		print $HAND3 $user.":".crypt($mdp, $salt).":0:9999:14:::\n";
-		`mkdir /home/$user`  or die ("impossible de créer le répertoire\n");
 	}
 	close($HAND3);
 }
@@ -182,7 +183,7 @@ sub insertGroup {
 
 sub removeUser {
 	my $login = $_[0];
-	`sed '/^$login/d' $paswd`;
-	`sed '/^$login/d' $shadow`;
+	`sed -i '/^$login/d' $passwd`;
+	`sed -i '/^$login/d' $shadow`;
 	print "suppression de l'utilisateur ".$login."\n";
 }
