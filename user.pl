@@ -9,6 +9,7 @@ my %users;
 my $passwd = "passwd";
 my $group = "group";
 my $shadow = "shadow";
+my $log = "log";
 my $mdp = "moi";
 my $salt = "salt";
 my $cptID = 1000;
@@ -71,19 +72,24 @@ sub treatLogin {
 # trie les utilisateurs dans une table de hachage sur le nom de compte
 sub sortUser {
 	my $file = $ARGV[0];
+	open(my $HAND1, '>>', $log) or die ("impossible d'ouvrir le fichier log\n");
+	print $HAND1 "prénom nom:login:uid:password\n";
+
 	open(HANDLE, $file) or die ("impossible d'ouvrir le fichier\n");
 	while(my $line = <HANDLE>) {
 		my @fields = split(/;/, $line);
 		chomp($fields[1]);
 		chomp($fields[0]);
+
 		#création du login
 		my $login;
-		# fields[1] = nom et fields[0] = prénom
 		$login = substr($fields[1],0, length($fields[1])).substr($fields[0],0,1) if(length($fields[1]) <= 7);
 		$login = substr($fields[1],0,7).substr($fields[0],0,1) if(length($fields[1]) > 7);
-		#ajout de la clé et des champs
 		$login = treatLogin($login);
 		$users{$login} = generateID();
+
+		# ajout dans le fichier log
+		print $HAND1 $fields[1]." ".$fields[0].":".$login.":".$users{$login}.":moi\n";
 	}
 	close(HANDLE);
 }
@@ -94,25 +100,48 @@ sub insertOneUser {
 	my $lastName = $_[1];
 	my $oneMDP = $_[2];
 	my $login;
+	my $exist = 0;
+
 	$login = substr($lastName,0, length($lastName)).substr($firstName,0,1) if(length($lastName) <= 7);
 	$login = substr($lastName,0,7).substr($firstName,0,1) if(length($lastName) > 7);
 	my $oneID = generateID();
-	open(my $HAND2, '>', $passwd) or die ("impossible d'ouvrir le fichier passwd\n");
-	print $HAND2 $login.":x:".$oneID.":50::/home/".$login.":bin/false\n";
-	close($HAND2);
-	open(my $HAND3, '>', $shadow) or die ("impossible d'ouvrir le fichier shadow\n");
-	print $HAND3 $login.":".crypt($oneMDP, $salt).":0:9999:14:::\n";
-	close($HAND3);
-	`mkdir /home/$login`;
-	print "insertion de l'utilisateur ".$login."\n";
+
+	# vérifie l'existence de l'utilisateur
+	open(HANDLE, $passwd) or die ("impossible d'ouvrir le fichier passwd\n");
+	while(my $line = <HANDLE>) {
+		if($line =~ /^$login/){
+			$exist = 1;
+		}
+	}
+	close(HANDLE);
+
+	# écriture dans les fichiers
+	if($exist == 0){
+		open(my $HAND2, '>>', $passwd) or die ("impossible d'ouvrir le fichier passwd\n");
+		print $HAND2 $login.":x:".$oneID.":50::/home/".$login.":bin/bash\n";
+		close($HAND2);
+
+		open(my $HAND3, '>>', $shadow) or die ("impossible d'ouvrir le fichier shadow\n");
+		print $HAND3 $login.":".crypt($oneMDP, $salt).":0:9999:14:::\n";
+		close($HAND3);
+
+		# ajout dans le fichier log
+		open(my $HAND1, '>>', $log) or die ("impossible d'ouvrir le fichier log\n");
+		print $HAND1 "prénom:nom:login:uid:password\n";
+		print $HAND1 $firstName." ".$lastName.":".$login.":".$oneID.":".$oneMDP."\n";
+
+		# ajout du dossier
+		`mkdir /home/$login` or die ("impossible de créer le répertoire\n");
+		print "insertion de l'utilisateur ".$login."\n";
+	}
 }
 
 # insère les utilisateurs dans le fichier /etc/passwd
 # selon les données stockées dans la table de hachage users et la structure du fichier
 sub insertPasswd {
-	open(my $HAND2, '>', $passwd) or die ("impossible d'ouvrir le fichier passwd\n");
+	open(my $HAND2, '>>', $passwd) or die ("impossible d'ouvrir le fichier passwd\n");
 	foreach my $user(keys %users) {
-		print $HAND2 $user.":x:".$users{$user}.":50::/home/".$user.":bin/false\n";
+		print $HAND2 $user.":x:".$users{$user}.":50::/home/".$user.":bin/bash\n";
 	}
 	close($HAND2);
 }
@@ -120,10 +149,10 @@ sub insertPasswd {
 # insère les utilisateurs dans le fichier /etc/passwd
 # selon les données stockées dans la table de hachage users et la structure du fichier
 sub insertShadow {
-open(my $HAND3, '>', $shadow) or die ("impossible d'ouvrir le fichier shadow\n");
+open(my $HAND3, '>>', $shadow) or die ("impossible d'ouvrir le fichier shadow\n");
 	foreach my $user(keys %users) {
 		print $HAND3 $user.":".crypt($mdp, $salt).":0:9999:14:::\n";
-		`mkdir /home/$user`;
+		`mkdir /home/$user`  or die ("impossible de créer le répertoire\n");
 	}
 	close($HAND3);
 }
@@ -131,15 +160,27 @@ open(my $HAND3, '>', $shadow) or die ("impossible d'ouvrir le fichier shadow\n")
 # insère les utilisateurs dans le fichier /etc/group
 # ID du groupe de l'utilisateur par défaut : 50
 sub insertGroup {
-	open(my $HAND4, '>', $group) or die ("impossible d'ouvrir le fichier group\n");
-	print $HAND4 "default:x:50:\n";
-	close($HAND4);
+
+	# vérifie l'existence du groupe
+	open(HANDLE, $group) or die ("impossible d'ouvrir le fichier group\n");
+	my $exist = 0;
+	while(my $line = <HANDLE>) {
+		if($line =~ /50:$/) {
+			$exist = 1;
+		}
+	}
+	close (HANDLE);
+
+	# écriture
+	if($exist == 0){
+		open(my $HAND4, '>>', $group) or die ("impossible d'ouvrir le fichier group\n");
+		print $HAND4 "default:x:50:\n";
+		close($HAND4);
+	}
 }
 
 
 sub removeUser {
 	my $login = $_[0];
-	#s/$login// $passwd;
-	#s/$login// $shadow;
 	print "suppression de l'utilisateur ".$login."\n";
 }
