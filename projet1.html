@@ -1,0 +1,50 @@
+<!DOCTYPE>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<title>admin systeme</title>
+</head>
+<body>
+<h1>Explications du projet d'administration sysmète</h1>
+<p>Réalisé par Aurélia Catrice et Xavier Lamarque</p>
+<h2>choix de la technologie</h2>
+<p>Nous avons ici utilisé le language Perl, car il est facile de gérer le contenu des fichiers, de plus nous pouvons faire appel aux commandes du Shell aisément</p>
+<h2>Traitement des erreurs</h2>
+<p>Les erreurs liées à l'ouverture de fichier est gérée, tout  comme celles en rapport avec la saisie des paramètres par l'utilisateur à l'appel du programme. Pour visualiser les différents appels possibles, lancez la commande : perl user.pl -n</p>
+<h2>Fonctionnement</h2>
+<p>Le programme user.pl est découpé en différentes fonctions commentées dans le script</p>
+<table>
+<tr>
+<th>sortUser</th>
+<td>trie les utilisateurs selon leur nom de compte généré</td>
+</tr><tr>
+<th>insertPasswd</th>
+<td>ajoute le compte utilisateur et les différentes informations dans le fichier/etc/passwd</td>
+<tr></tr>
+<th>insertShadow</th>
+<td>ajoute le compte utilisateur et les différentes informations dans le fichier/etc/shadow</td>
+</tr><tr>
+<th>insertGroup</th>
+<td>ajoute un groupe par défaut dans le fichier/etc/group</td>
+</tr><tr>
+<th>generateID</th>
+<td>genère un uid en fonction de ceux déjà présents dans le fichier /etc/passwd</td>
+</tr><tr>
+<th>treatLogin</th>
+<td>traite les caractères spéciaux du ocmpte utilisateur généré</td>
+</tr><tr>
+<th>insertOneUser</th>
+<td>ajout un compte utilisateur dans les fichiers /etc/passwd et /etc/shadow</td>
+</tr><tr>
+<th>alterUserLogin</th>
+<td>modifie le nom de compte d'un utilisateur</td>
+</tr><tr>
+<th>alterUserPassword</th>
+<td>modifie le mot de passe d'un utilisateur</td>
+</tr><tr>
+<th>removeUser</th>
+<td>supprime le compte d'un utilisateur dans les fichiers /etc/shadow et /etc/passwd</td>
+</tr>
+</table>
+</body>
+</html>

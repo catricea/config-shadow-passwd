@@ -1,7 +1,5 @@
 #/bin/usr/perl
 
-#réalisé par Aurélia Catrice et Xavier Lamarque
-
 use strict;
 use warnings;
 use utf8;
