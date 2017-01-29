@@ -6,9 +6,9 @@ use utf8;
 use Unicode::Normalize;
 
 my %users;	
-my $passwd = "passwd";
-my $group = "group";
-my $shadow = "shadow";
+my $passwd = "/etc/passwd";
+my $group = "/etc/group";
+my $shadow = "/etc/shadow";
 my $log = "log";
 my $mdp = "moi";
 my $salt = "salt";
@@ -26,8 +26,13 @@ if($#ARGV < 0) {
 
 if($ARGV[0] eq "-n") {
  	#Explique la commande
- 	print "[fichier]\ntrie selon les informations présentes pour chaque enregistrement\najoute au système\n";
- 	print "option -d [login]\nsupprime un utilisateur à partir de son login\n";
+ 	print "-----------\n";
+ 	print "[fichier]\ntrie selon les informations presentes pour chaque enregistrement\najoute au systeme\n";
+ 	print "-----------\n";
+ 	print "[nom] [prenom) [mot de passe]\najoute un utilisateur au systeme\n";
+	print "-----------\n";
+ 	print "-d [login]\nsupprime un utilisateur a partir de son login\n";
+ 	print "-----------\n";
  	exit 0;
 }
 
@@ -58,10 +63,10 @@ sub generateID {
 	return ($cptID);
 }
 
+#gère les caractères spéciaux et les espaces contenus dans le nom de compte
 sub treatLogin {
 	my $login = $_[0];
 	$login = NFD($login);
-	#suppression des espaces et caractères spéciaux
 	$login =~ s/\s+//;
 	$login =~ s/\pM//;
 	$login =~ s/ë/e/;
@@ -180,11 +185,12 @@ sub insertGroup {
 	}
 }
 
-
+# retire un utilisateur en fonction de son nom de compte
 sub removeUser {
 	my $login = $_[0];
 	`sed -i '/^$login/d' $passwd`;
 	`sed -i '/^$login/d' $shadow`;
+	`sed -i '/^$login/d' $group`;
 	`sed -i '/$login/d' $log`;
 	print "suppression de l'utilisateur ".$login."\n";
 }
