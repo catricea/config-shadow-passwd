@@ -18,11 +18,6 @@ use open ':encoding(utf8)';
 
 
 # -----------------------gestion des paramètres----------------------------
-if($#ARGV < 0) {
- 	#Explique la commande
- 	print "-n pour afficher l'aide\n";
- 	exit 0;
-}
 
 if($ARGV[0] eq "-n") {
  	#Explique la commande
@@ -31,28 +26,40 @@ if($ARGV[0] eq "-n") {
  	print "-----------\n";
  	print "[nom] [prenom) [mot de passe]\najoute un utilisateur au systeme\n";
 	print "-----------\n";
- 	print "-d [login]\nsupprime un utilisateur a partir de son login\n";
+ 	print "-d [login]\nsupprime un utilisateur a partir de son nom de compte\n";
+ 	print "-----------\n";
+ 	print "-l [login] [nouveau login]\nmodifie le nom de compte d'un utilisateur\n";
+ 	print "-----------\n";
+ 	print "-p [login] [nouveau mot de passe]\nmodifie le mot de passe d'un utilisateur\n";
  	print "-----------\n";
  	exit 0;
 }
-
-if(@ARGV == 3){
-	insertOneUser($ARGV[0], $ARGV[1], $ARGV[2]);
-}
-
-if($ARGV[0] eq "-d" && @ARGV == 2) {
+elsif($ARGV[0] eq "-d" && @ARGV == 2) {
 	removeUser($ARGV[1]);
 }
-
-my $lastID = `cat /etc/passwd | cut -d ':' -f3 | sort -n`;
-my @ids = split(/\n/, $lastID);
-
-if(-f $ARGV[0] && @ARGV == 1){
+elsif($ARGV[0] eq "-l" && @ARGV == 3) {
+	alterUserLogin($ARGV[1], $ARGV[2]);
+}
+elsif($ARGV[0] eq "-p" && @ARGV == 3) {
+	alterUserPassword($ARGV[1], $ARGV[2]);
+}
+elsif($ARGV[0] ne "-p" && $ARGV[0] ne "-d" && @ARGV == 3){
+	insertOneUser($ARGV[0], $ARGV[1], $ARGV[2]);
+}
+elsif(-f $ARGV[0] && @ARGV == 1){
 	sortUser();
 	insertPasswd();
 	insertShadow();
 	insertGroup();
 }
+else {
+ 	#Explique la commande
+ 	print "-n pour afficher l'aide\n";
+ 	exit 0;
+}
+
+my $lastID = `cat /etc/passwd | cut -d ':' -f3 | sort -n`;
+my @ids = split(/\n/, $lastID);
 
 # génère un ID s'il ne se trouve pas déjà dans le fichier /etc/passwd
 sub generateID {
@@ -183,6 +190,26 @@ sub insertGroup {
 		print $HAND4 "default:x:50:\n";
 		close($HAND4);
 	}
+}
+
+#modifie le nom de compte de l'utilisateur
+sub alterUserLogin {
+	my $login =$_[0];	
+	my $newLogin =$_[1];
+	`sed -i 's/$login/$newLogin/' $passwd`;
+	`sed -i 's/$login/$newLogin/' $shadow`;
+	`mv /home/$login /home/$newLogin`;
+	print "modification du nom de compte de l'utilisateur ".$login." en ".$newLogin."\n";
+}
+
+#modifie le mot de passe de l'utilisateur
+sub alterUserPassword {
+	my $user =$_[0];	
+	my $newPassword =$_[1];
+	`sed -i '/^$user/d' $shadow`;
+	open(my $HAND3, '>>', $shadow) or die ("impossible d'ouvrir le fichier shadow\n");
+	print $HAND3 $user.":".crypt($newPassword, $salt).":0:9999:14:::\n";
+	print "modification du mot de passe de l'utilisateur ".$user."\n";
 }
 
 # retire un utilisateur en fonction de son nom de compte
